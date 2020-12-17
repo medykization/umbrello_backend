@@ -33,7 +33,6 @@ python manage.py test
 ```
 ## Endpoints
 
-```
 | Endpoint | Input  | Output |
 | --- | --- | --- |
 | boards/ |  | id,name |
@@ -50,4 +49,3 @@ python manage.py test
 | boards/update/card | *id,*description,*term | |
 | boards/archive/card | id | |
 | boards/delete/card | id | |
-```
