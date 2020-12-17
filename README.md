@@ -35,17 +35,17 @@ python manage.py test
 
 | Endpoint | Input  | Output |
 | --- | --- | --- |
-| boards/ |  | id,name |
+| boards/ |  | id, name |
 | boards/add | name | |
-| boards/update | id,name |  |
-| boards/lists | id | id,name,order,archived |
-| boards/add/list | id,name | |
-| boards/update/list | id,name | |
-| boards/change/list | id,nr | |
+| boards/update | id, name |  |
+| boards/lists | id | id, name, order, archived |
+| boards/add/list | id, name | |
+| boards/update/list | id, name | |
+| boards/change/list | id, nr | |
 | boards/archive/list | id | |
 | boards/delete/list | id | |
-| boards/cards | id | |
-| boards/add/card | id,name,description,term | |
-| boards/update/card | *id,*description,*term | |
+| boards/cards | id | id, name, description, order, archived, term |
+| boards/add/card | id, name, description, term | |
+| boards/update/card | *id, *description, *term | |
 | boards/archive/card | id | |
 | boards/delete/card | id | |
