@@ -4,10 +4,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.authtoken.models import Token
 from rest_framework import generics
-from boards.serializers import BoardSerializer, ListSerializer, AddListSerializer, AddCardSerializer, CardSerializer
+from boards.serializers import BoardSerializer, ListSerializer, AddListSerializer, AddCardSerializer, CardSerializer, ChangeLogSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import GenericAPIView
-from boards.models import Board, List, Card
+from boards.models import Board, List, Card, ChangeLog
 from django.db.models import Max
 from django.contrib.auth.models import User
 import json
@@ -40,6 +40,19 @@ class BoardAdd(GenericAPIView):
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class BoardLogs(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self, id):
+        board = Board.objects.get(id = id)
+        return ChangeLog.objects.filter(board_id = board)
+
+    def post(self, request, *args):
+        body = request.data
+        queryset = self.get_queryset(body['board_id'])
+        serializer = ChangeLogSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class BoardNameUpdate(GenericAPIView):
     permission_classes = (IsAuthenticated,)

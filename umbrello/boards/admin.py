@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Board, List, Card
+from .models import Board, List, Card, ChangeLog
 
 # Register your models here.
 
@@ -12,6 +12,10 @@ class ListAdmin(admin.ModelAdmin):
 class CardAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'order', 'description')
 
+class ChangeLogAdmin(admin.ModelAdmin):
+    list_display = ('id', 'board_id', 'username', 'description', 'term', 'order')
+
 admin.site.register(Board, BoardAdmin)
 admin.site.register(List,ListAdmin)
 admin.site.register(Card,CardAdmin)
+admin.site.register(ChangeLog,ChangeLogAdmin)

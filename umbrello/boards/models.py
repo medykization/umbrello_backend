@@ -31,12 +31,19 @@ class Card(models.Model):
     list_id = models.ForeignKey(List,  on_delete=models.CASCADE)
     members_id = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True)
     name = models.CharField(max_length=30)
-    archived = models.BooleanField(default = False)
+    archived = models.BooleanField(default=False)
     order = models.DecimalField(
         max_digits=30, decimal_places=15, blank=True, null=True)
-    description = models.CharField(max_length=30, blank = True)
-    term = models.DateField(null=True, blank = True, default = None) 
+    description = models.CharField(max_length=30, blank=True)
+    term = models.DateField(null=True, blank=True, default=None) 
 
     def __str__(self):
         return self.name
     
+class ChangeLog (models.Model):
+    id = models.AutoField(primary_key=True)
+    board_id = models.ForeignKey(Board,  on_delete=models.CASCADE)
+    username = models.CharField(max_length=30)
+    description = models.CharField(max_length=500, blank = True)
+    term = models.DateField(auto_now_add=True) 
+    order = models.DecimalField(max_digits=30, decimal_places=15)
