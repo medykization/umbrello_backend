@@ -40,7 +40,7 @@ class Card(models.Model):
     def __str__(self):
         return self.name
     
-class ChangeLog (models.Model):
+class Log(models.Model):
     id = models.AutoField(primary_key=True)
     board_id = models.ForeignKey(Board,  on_delete=models.CASCADE)
     username = models.CharField(max_length=30)

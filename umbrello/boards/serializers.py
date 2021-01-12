@@ -1,4 +1,4 @@
-from boards.models import Board, List, Card, ChangeLog
+from boards.models import Board, List, Card,  Log
 from django.contrib.auth.models import User
 from rest_framework.serializers import ModelSerializer, ValidationError
 
@@ -13,11 +13,17 @@ class BoardSerializer(ModelSerializer):
         super().__init__(*args, **kwargs)
 
     def create(self, validated_data):
+        print(validated_data['user'].username)
         board = Board(
             owner_id=validated_data['user'], name=validated_data['name'])
-        #log = ChangeLog()
+        last_log = Log.objects.filter(board_id = board).order_by('order').last()
+        if last_log is None:
+            log_order = 1
+        else:
+            log_order = last_log.order + 1
+        log = Log(board_id = board, username = validated_data['user'].username, description = 'created the board',order = log_order)
         board.save()
-
+        log.save()
 
     def validate(self, data):
         user = self.user
@@ -50,6 +56,14 @@ class AddListSerializer(ModelSerializer):
         new_list = List(board_id=board, name=validated_data['name'], order = order)
         new_list.save()
 
+        last_log = Log.objects.filter(board_id = board).order_by('order').last()
+        if last_log is None:
+            log_order = 1
+        else:
+            log_order = last_log.order + 1
+        log = Log(board_id = board, username = board.owner_id.username, description = 'created the list',order = log_order)
+        log.save()
+
 class AddCardSerializer(ModelSerializer):
     class Meta:
         model = Card
@@ -67,6 +81,14 @@ class AddCardSerializer(ModelSerializer):
         new_card = Card(list_id=list_id, name=validated_data['name'], description = validated_data['description'], term = validated_data['term'], order = order)
         new_card.save()
 
+        last_log = Log.objects.filter(board_id = list_id.board_id).order_by('order').last()
+        if last_log is None:
+            log_order = 1
+        else:
+            log_order = last_log.order + 1
+        log = Log(board_id = list_id.board_id, username = list_id.board_id.owner_id.username, description = 'created the card',order = log_order)
+        log.save()
+
 class CardSerializer(ModelSerializer):
     class Meta:
         model = Card
@@ -75,9 +97,9 @@ class CardSerializer(ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-class ChangeLogSerializer(ModelSerializer):
+class LogSerializer(ModelSerializer):
     class Meta:
-        model = ChangeLog
+        model = Log
         fields = ['username','description','order','term']
 
     def __init__(self, *args, **kwargs):
