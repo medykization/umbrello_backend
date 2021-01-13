@@ -139,14 +139,13 @@ class ListAdd(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self, user, board_id):
-        board = Board.objects.get(owner_id = user, id = board_id)
+        board = Board.objects.get(id = board_id)
         last_list = List.objects.filter(board_id = board).order_by('order').last()
         if last_list is None:
             return board, 1
         return board, last_list.order + 1
 
     def post(self, request, *args):
-        user = request.user
         body = request.data
         input = {"name": body['name']}
         try:
