@@ -268,6 +268,27 @@ class CardArchive(GenericAPIView):
         except Card.DoesNotExist:
             return Response("Card doesn't exist")
 
+class CardArchived(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self, user, board_id):
+        board = Board.objects.get(owner_id = user, id = board_id)
+        lists = List.objects.filter(board_id = board)
+        return lists
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        body = request.data
+        id = body['id']
+        lists = self.get_queryset(user, id)
+        print('asdadas')
+        #print(lists)
+        cards =  Card.objects.filter(list_id__in = lists, archived = True)
+        serializer = CardSerializer(cards, many=True)
+        return Response(serializer.data)
+        #print(cards)
+       
+    
 class CardDelete(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 

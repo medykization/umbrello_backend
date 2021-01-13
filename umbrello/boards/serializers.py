@@ -78,7 +78,7 @@ class AddCardSerializer(ModelSerializer):
         list_id = self.list
         order = self.order
         
-        new_card = Card(list_id=list_id, name=validated_data['name'], description = validated_data['description'], term = validated_data['term'], order = order)
+        new_card = Card(list_id=list_id, name=validated_data['name'], description   = validated_data['description'], term = validated_data['term'], order = order)
         new_card.save()
 
         last_log = Log.objects.filter(board_id = list_id.board_id).order_by('order').last()
