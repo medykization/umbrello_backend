@@ -15,7 +15,7 @@ class BoardSerializer(ModelSerializer):
     def create(self, validated_data):
         user = validated_data['user']
         board = Board(owner_id=user, name=validated_data['name'])
-        
+
         last_log = Log.objects.filter(board_id = board).order_by('order').last()
         if last_log is None:
             log_order = 1
@@ -23,8 +23,8 @@ class BoardSerializer(ModelSerializer):
             log_order = last_log.order + 1
         log = Log(board_id = board, username = validated_data['user'].username, description = 'created the board',order = log_order)
 
-        #group = Group(name = board.id)
-        #group.save()
+        group = Group(name = board.id)
+        group.save()
         #user.groups.add(group)
         #board.members_id = group
 

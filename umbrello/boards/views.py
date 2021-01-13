@@ -148,15 +148,18 @@ class ListArchive(GenericAPIView):
         try:
             li = List.objects.get(id = id)
             cards = Card.objects.filter(list_id = li)
+
+            status = not li.archived
+
             for card in cards:
-                card.archived = not card.archived
+                card.archived = status
                 card.save()
-            li.archived = not li.archived
+            li.archived = status
             li.save()
-            if li.archived == True:
-                return Response("Card archived")
+            if status == True:
+                return Response("List archived")
             else:
-                return Response("Card unarchived")
+                return Response("List unarchived")
         except List.DoesNotExist:
             return Response("List doesn't exist")
 
