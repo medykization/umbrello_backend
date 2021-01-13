@@ -264,14 +264,25 @@ class CardValuesUpdate(GenericAPIView):
 class CardArchive(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
+    def get_queryset(self, id):
+        return List.objects.filter(id = id).first()
+
     def put(self, request, *args, **kwargs):
         body = request.data
         id = body['id']
+        
         try:
             card = Card.objects.get(id = id)
-            card.archived = not card.archived
+            status = not card.archived
+
+            li = self.get_queryset(card.list_id.id)
+
+            if li.archived == True and status == False:
+                 return Response("Deal with list first")
+
+            card.archived = status
             card.save()
-            if card.archived == True:
+            if status == True:
                 return Response("Card archived")
             else:
                 return Response("Card unarchived")
