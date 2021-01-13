@@ -14,10 +14,22 @@ import json
 
 class BoardAddUser(GenericAPIView):
     permission_classes = (IsAuthenticated,)
+    def get_queryset(self, id, name):
+        return Board.objects.filter(id = id).first(), User.objects.filter(username = name).first()
 
     def post(self, request, *args):
+        try:
+            body = request.data
+            id = body['id']
+            name = body['name']
+
+            board, user = self.get_queryset(id, name)
+            user.groups.add(board.members_id)
+            user.save()
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_200_OK)
         
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BoardView(generics.RetrieveAPIView):
@@ -25,13 +37,17 @@ class BoardView(generics.RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self, user):
-        return Board.objects.filter(owner_id=user)  # return all model objects
+        return Board.objects.filter(members_id__in = user.groups.all())  # return all model objects
 
     def get(self, request, *args, **kwargs):  # GET request handler for the model
-        user = request.user
-        queryset = self.get_queryset(user)
-        serializer = BoardSerializer(queryset, user=user, many=True)
-        return Response(serializer.data)
+        try:
+            user = request.user
+            queryset = self.get_queryset(user)
+            serializer = BoardSerializer(queryset, user=user, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+        
 
 
 class BoardAdd(GenericAPIView):
@@ -70,7 +86,7 @@ class BoardNameUpdate(GenericAPIView):
         id = body['id']
         name = body['name']
         if name == "":
-            return Response("You enter blank name")
+            return Response("You enter blank name",  status=status.HTTP_400_BAD_REQUEST)
         try:
             board = Board.objects.get(owner_id = user, id = id)
             if board.name == name:
@@ -79,7 +95,7 @@ class BoardNameUpdate(GenericAPIView):
             board.save()
             return Response("Board name updated")
         except Board.DoesNotExist:
-            return Response("Board doesn't exist")
+            return Response("Board doesn't exist",  status=status.HTTP_400_BAD_REQUEST)
         
 
 class ListView(generics.RetrieveAPIView):
@@ -113,7 +129,7 @@ class ListNameUpdate(GenericAPIView):
             li.save()
             return Response("List name updated")
         except Board.DoesNotExist:
-            return Response("List doesn't exist")
+            return Response("List doesn't exist",  status=status.HTTP_400_BAD_REQUEST)
 
 class ListAdd(GenericAPIView):
     permission_classes = (IsAuthenticated,)
@@ -132,7 +148,7 @@ class ListAdd(GenericAPIView):
         try:
             board, order = self.get_queryset(user,body['id'])
         except Board.DoesNotExist:
-            return Response("Board doesn't exist")
+            return Response("Board doesn't exist",  status=status.HTTP_400_BAD_REQUEST)
         serializer = AddListSerializer(data=input, board=board, order = order)
         if serializer.is_valid(raise_exception=True):
             serializer.create(serializer.validated_data)
@@ -161,7 +177,7 @@ class ListArchive(GenericAPIView):
             else:
                 return Response("List unarchived")
         except List.DoesNotExist:
-            return Response("List doesn't exist")
+            return Response("List doesn't exist",  status=status.HTTP_400_BAD_REQUEST)
 
 class ListDelete(GenericAPIView):
     permission_classes = (IsAuthenticated,)
@@ -173,7 +189,7 @@ class ListDelete(GenericAPIView):
             List.objects.get(id = id, archived = True).delete()
             return Response("List deleted")
         except List.DoesNotExist:
-            return Response("List doesn't exist")
+            return Response("List doesn't exist",  status=status.HTTP_400_BAD_REQUEST)
 
 class ListChangeOrder(GenericAPIView):
     permission_classes = (IsAuthenticated,)
@@ -195,7 +211,7 @@ class ListChangeOrder(GenericAPIView):
             #lists = List.object.filter(order__gte=)
             return Response("List name updated")
         except Board.DoesNotExist:
-            return Response("List doesn't exist")
+            return Response("List doesn't exist", status=status.HTTP_400_BAD_REQUEST)
 
 class CardView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
@@ -214,7 +230,7 @@ class CardView(GenericAPIView):
 class CardAdd(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
-    def get_queryset(self, user, list_id):
+    def get_queryset(self, list_id):
         li = List.objects.get(id = list_id)
         last_card = Card.objects.filter(list_id = li).order_by('order').last()
         if last_card is None:
@@ -222,15 +238,14 @@ class CardAdd(GenericAPIView):
         return li, last_card.order + 1
 
     def post(self, request, *args):
-        user = request.user
         body = request.data
         input = {"name": body['name'], "description": body['description'], "term": body['term']}
         try:
-            li, order = self.get_queryset(user,body['id'])
+            li, order = self.get_queryset(body['id'])
             if li.archived == True:
                 return Response("List is archived")
         except List.DoesNotExist:
-            return Response("List doesn't exist")
+            return Response("List doesn't exist",  status=status.HTTP_400_BAD_REQUEST)
         serializer = AddCardSerializer(data=input, list=li, order = order)
         if serializer.is_valid(raise_exception=True):
             serializer.create(serializer.validated_data)
@@ -247,7 +262,7 @@ class CardValuesUpdate(GenericAPIView):
         description = body['description']
         term = body['term']
         if name == "" and description == "" and term == "":
-            return Response("You enter blank values")
+            return Response("You enter blank values",  status=status.HTTP_400_BAD_REQUEST)
         try:
             card = Card.objects.get(id = id)
             if name != "" and card.name != name:
@@ -259,7 +274,7 @@ class CardValuesUpdate(GenericAPIView):
             card.save()
             return Response("Card values updated")
         except Board.DoesNotExist:
-            return Response("Card doesn't exist")
+            return Response("Card doesn't exist",  status=status.HTTP_400_BAD_REQUEST)
 
 class CardArchive(GenericAPIView):
     permission_classes = (IsAuthenticated,)
@@ -278,7 +293,7 @@ class CardArchive(GenericAPIView):
             li = self.get_queryset(card.list_id.id)
 
             if li.archived == True and status == False:
-                 return Response("Deal with list first")
+                 return Response("Deal with list first",  status=status.HTTP_400_BAD_REQUEST)
 
             card.archived = status
             card.save()
@@ -287,7 +302,7 @@ class CardArchive(GenericAPIView):
             else:
                 return Response("Card unarchived")
         except Card.DoesNotExist:
-            return Response("Card doesn't exist")
+            return Response("Card doesn't exist",  status=status.HTTP_400_BAD_REQUEST)
 
 class CardArchived(GenericAPIView):
     permission_classes = (IsAuthenticated,)
@@ -317,4 +332,4 @@ class CardDelete(GenericAPIView):
             Card.objects.get(id = id, archived = True).delete()
             return Response("Card deleted")
         except List.DoesNotExist:
-            return Response("Card doesn't exist")
+            return Response("Card doesn't exist",  status=status.HTTP_400_BAD_REQUEST)

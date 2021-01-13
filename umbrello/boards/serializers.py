@@ -23,11 +23,13 @@ class BoardSerializer(ModelSerializer):
             log_order = last_log.order + 1
         log = Log(board_id = board, username = validated_data['user'].username, description = 'created the board',order = log_order)
 
-        group = Group(name = board.id)
-        group.save()
-        #user.groups.add(group)
-        #board.members_id = group
+        board.save()
 
+        group = Group.objects.create(name=str(board.id))
+        group.save()
+        user.groups.add(group)
+        board.members_id = group
+        
         board.save()
         log.save()
 
