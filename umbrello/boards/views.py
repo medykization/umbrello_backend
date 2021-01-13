@@ -12,6 +12,13 @@ from django.db.models import Max
 from django.contrib.auth.models import User
 import json
 
+class BoardAddUser(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args):
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class BoardView(generics.RetrieveAPIView):
     # checks if user is authenticated to view the model objects
@@ -156,7 +163,7 @@ class ListArchive(GenericAPIView):
 class ListDelete(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
-    def delete(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         body = request.data
         id = body['id']
         try:
@@ -274,25 +281,22 @@ class CardArchived(GenericAPIView):
     def get_queryset(self, user, board_id):
         board = Board.objects.get(owner_id = user, id = board_id)
         lists = List.objects.filter(board_id = board)
-        return lists
+        cards =  Card.objects.filter(list_id__in = lists, archived = True)
+        return cards
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         user = request.user
         body = request.data
         id = body['id']
-        lists = self.get_queryset(user, id)
-        print('asdadas')
-        #print(lists)
-        cards =  Card.objects.filter(list_id__in = lists, archived = True)
+        cards = self.get_queryset(user, id)
         serializer = CardSerializer(cards, many=True)
         return Response(serializer.data)
-        #print(cards)
        
     
 class CardDelete(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
-    def delete(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         body = request.data
         id = body['id']
         try:
