@@ -100,7 +100,7 @@ class AddCardSerializer(ModelSerializer):
 class CardSerializer(ModelSerializer):
     class Meta:
         model = Card
-        fields = ['id','name','description','order','archived','term']
+        fields = ['id','name','description','order','archived','term', 'members_id']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

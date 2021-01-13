@@ -1,5 +1,5 @@
 from django.urls import path
-from boards.views import BoardView, BoardAdd, BoardNameUpdate, BoardAddUser, ListView, ListAdd, CardArchived, CardAdd, CardView, ListNameUpdate, ListChangeOrder, ListArchive, CardArchive, ListDelete, CardDelete, CardValuesUpdate, BoardLogs
+from boards.views import BoardView, BoardAdd, BoardNameUpdate, CardAddUser, BoardAddUser, ListView, ListAdd, CardArchived, CardAdd, CardView, ListNameUpdate, ListChangeOrder, ListArchive, CardArchive, ListDelete, CardDelete, CardValuesUpdate, BoardLogs
 
 
 app_name = "boards"
@@ -17,6 +17,7 @@ urlpatterns = [
     path('delete/list', ListDelete.as_view()),
     path('cards', CardView.as_view()),
     path('add/card', CardAdd.as_view()),
+    path('add/user/card', CardAddUser.as_view()),
     path('update/card', CardValuesUpdate.as_view()),
     path('archive/card', CardArchive.as_view()),
     path('archived/cards', CardArchived.as_view()),
