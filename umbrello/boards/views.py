@@ -138,7 +138,7 @@ class ListNameUpdate(GenericAPIView):
 class ListAdd(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
-    def get_queryset(self, user, board_id):
+    def get_queryset(self, board_id):
         board = Board.objects.get(id = board_id)
         last_list = List.objects.filter(board_id = board).order_by('order').last()
         if last_list is None:
@@ -149,7 +149,7 @@ class ListAdd(GenericAPIView):
         body = request.data
         input = {"name": body['name']}
         try:
-            board, order = self.get_queryset(user,body['id'])
+            board, order = self.get_queryset(body['id'])
         except Board.DoesNotExist:
             return Response("Board doesn't exist",  status=status.HTTP_400_BAD_REQUEST)
             
@@ -169,14 +169,14 @@ class ListArchive(GenericAPIView):
             li = List.objects.get(id = id)
             cards = Card.objects.filter(list_id = li)
 
-            status = not li.archived
+            statuss = not li.archived
 
             for card in cards:
-                card.archived = status
+                card.archived = statuss
                 card.save()
-            li.archived = status
+            li.archived = statuss
             li.save()
-            if status == True:
+            if statuss == True:
                 return Response("List archived", status=status.HTTP_200_OK)
             else:
                 return Response("List unarchived", status=status.HTTP_200_OK)
@@ -201,20 +201,18 @@ class ListChangeOrder(GenericAPIView):
     def put(self, request, *args, **kwargs):
         body = request.data
         id = body['id']
-        nr = body['nr']
+        state = body['state']  # "id=order;id=order"
+        req_list = state.split(';')
+        
+        
         try:
-            li = List.objects.get(id = id)
-            if nr == li.order:
-                return Response("You enter the same value", status=status.HTTP_400_BAD_REQUEST)
-
-            last_nr = List.objects.filter(board_id = li.board_id).order_by('order').last()
-
-            if nr > last_nr or nr < 1:
-                return Response("The entered number is incorrect", status=status.HTTP_400_BAD_REQUEST)
-
-            #lists = List.object.filter(order__gte=)
-            return Response("List name updated", status=status.HTTP_200_OK)
-        except Board.DoesNotExist:
+            lists = List.objects.filter(board_id = id).order_by('order')
+            for temp in lists:
+                print(temp.id," ",temp.order)
+                temp.save()
+            
+            return Response("Order changed", status=status.HTTP_200_OK)
+        except List.DoesNotExist:
             return Response("List doesn't exist", status=status.HTTP_400_BAD_REQUEST)
 
 class CardView(GenericAPIView):
