@@ -4,13 +4,14 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.authtoken.models import Token
 from rest_framework import generics
-from boards.serializers import BoardSerializer, ListSerializer, AddListSerializer, AddCardSerializer, CardSerializer, LogSerializer
+from boards.serializers import BoardSerializer, ListSerializer, AddListSerializer, AddCardSerializer, CardSerializer, LogSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import GenericAPIView
 from boards.models import Board, List, Card, Log
 from django.db.models import Max
 from django.contrib.auth.models import User
 import json
+from django.contrib.auth.models import Group
 
 class BoardAddUser(GenericAPIView):
     permission_classes = (IsAuthenticated,)
@@ -236,17 +237,26 @@ class CardView(GenericAPIView):
 class CardUsers(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
-    def get_queryset(self, id, name):
-        return Card.objects.filter(id = id).first(), User.objects.filter(username = name).first()
+    def get_queryset(self, id):
+        card = Card.objects.filter(id = id).first()
+        lista = List.objects.filter(id = card.list_id.id).first()
+        print(lista.id)
+        board = Board.objects.filter(id = lista.board_id.id).first()
+        print(board.id)
+        users = User.objects.filter(groups = Group.objects.filter(name = board.id).first())
+        for i in users:
+            print(i.username)
+        return users
 
     def post(self, request, *args):
         try:
             body = request.data
             id = body['id']
-            name = body['name']
-            card, user = self.get_queryset(id, name)
-            card.members_id.add(user)
-            return Response("User added to card", status=status.HTTP_200_OK)
+            queryset = self.get_queryset(id)
+            if (queryset is None):
+                return Response('Some error', status=status.HTTP_400_BAD_REQUEST)
+            serializer = UserSerializer(queryset, many=True)
+            return Response(serializer.data)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
@@ -280,14 +290,11 @@ class CardAddUser(GenericAPIView):
 
     def get_queryset(self, id, name):
         card = Card.objects.filter(id = id).first()
-        lista = List.objects.filter(name = card.list_id).first()
-        board = Board.objects.filter(name = lista.board_id).first()
-        #print(board.name)
+        lista = List.objects.filter(id = card.list_id.id).first()
+        board = Board.objects.filter(id = lista.board_id.id).first()
         user = User.objects.filter(username = name).first()
         user_in_board = Board.objects.filter(members_id__in = user.groups.all())
-        #print("-------",len(user_in_board),"-------")
         for i in user_in_board:
-            #print(i," ", board.name)
             if str(i) == str(board.name):
                 return card, user
         return None, None
@@ -298,7 +305,7 @@ class CardAddUser(GenericAPIView):
             id = body['id']
             name = body['name']
             card, user = self.get_queryset(id, name)
-            if card is None:
+            if (card is None) or (user is None):
                 return Response("User not in card", status=status.HTTP_400_BAD_REQUEST)
             card.members_id.add(user)
             return Response("User added to card", status=status.HTTP_200_OK)

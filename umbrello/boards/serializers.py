@@ -105,6 +105,14 @@ class CardSerializer(ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+class UserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
 class LogSerializer(ModelSerializer):
     class Meta:
         model = Log
