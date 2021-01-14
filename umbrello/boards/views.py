@@ -232,6 +232,24 @@ class CardView(GenericAPIView):
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
+
+class CardUsers(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self, id, name):
+        return Card.objects.filter(id = id).first(), User.objects.filter(username = name).first()
+
+    def post(self, request, *args):
+        try:
+            body = request.data
+            id = body['id']
+            name = body['name']
+            card, user = self.get_queryset(id, name)
+            card.members_id.add(user)
+            return Response("User added to card", status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
 class CardAdd(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
@@ -261,7 +279,18 @@ class CardAddUser(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self, id, name):
-        return Card.objects.filter(id = id).first(), User.objects.filter(username = name).first()
+        card = Card.objects.filter(id = id).first()
+        lista = List.objects.filter(name = card.list_id).first()
+        board = Board.objects.filter(name = lista.board_id).first()
+        #print(board.name)
+        user = User.objects.filter(username = name).first()
+        user_in_board = Board.objects.filter(members_id__in = user.groups.all())
+        #print("-------",len(user_in_board),"-------")
+        for i in user_in_board:
+            #print(i," ", board.name)
+            if str(i) == str(board.name):
+                return card, user
+        return None, None
 
     def post(self, request, *args):
         try:
@@ -269,6 +298,8 @@ class CardAddUser(GenericAPIView):
             id = body['id']
             name = body['name']
             card, user = self.get_queryset(id, name)
+            if card is None:
+                return Response("User not in card", status=status.HTTP_400_BAD_REQUEST)
             card.members_id.add(user)
             return Response("User added to card", status=status.HTTP_200_OK)
         except Exception as e:
